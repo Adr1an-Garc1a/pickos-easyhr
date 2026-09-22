@@ -63,6 +63,50 @@ def _row_to_dict(row) -> dict:
         "activo": row.activo,
     }
 
+@app.get("/employees")
+def list_employees():
+    area = request.args.get("area")
+    search = request.args.get("search")
+    page = max(int(request.args.get("page", 1)), 1)
+    page_size = min(max(int(request.args.get("page_size", 25)), 1), 100)
+    offset = (page - 1) * page_size
+
+    filters = ["e.activo = TRUE"]
+    params = {}
+    if area:
+        filters.append("e.area = :area")
+        params["area"] = area
+    if search:
+        filters.append(
+            "(LOWER(e.nombre) LIKE :q OR LOWER(e.apellido_paterno) LIKE :q "
+            "OR LOWER(e.apellido_materno) LIKE :q)"
+        )
+        params["q"] = f"%{search.lower()}%"
+
+    where_clause = " AND ".join(filters)
+
+    with SessionLocal() as db:
+        total = db.execute(
+            text(f"SELECT COUNT(*) FROM v_employees e WHERE {where_clause}"), params,
+        ).scalar()
+
+        params.update({"limit": page_size, "offset": offset})
+        rows = db.execute(
+            text(f"""
+                SELECT * FROM v_employees e
+                WHERE {where_clause}
+                ORDER BY e.id
+                LIMIT :limit OFFSET :offset
+            """), params,
+        ).fetchall()
+
+        return jsonify({
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "items": [_row_to_dict(r) for r in rows],
+        })
+
 
 @app.get("/health")
 def health():
@@ -76,55 +120,7 @@ def list_areas():
         return jsonify([{"id": r.id, "nombre": r.nombre} for r in rows])
 
 
-@app.get("/employees")
-def list_employees():
-    area = request.args.get("area")
-    search = request.args.get("search")
-    page = max(int(request.args.get("page", 1)), 1)
-    page_size = min(max(int(request.args.get("page_size", 25)), 1), 100)
-    offset = (page - 1) * page_size
 
-    filters = ["e.activo = TRUE"]
-    params = {}
-    if area:
-        filters.append("a.nombre = :area")
-        params["area"] = area
-    if search:
-        filters.append(
-            "(LOWER(e.nombre) LIKE :q OR LOWER(e.apellido_paterno) LIKE :q "
-            "OR LOWER(e.apellido_materno) LIKE :q)"
-        )
-        params["q"] = f"%{search.lower()}%"
-
-    where_clause = " AND ".join(filters)
-
-    with SessionLocal() as db:
-        total = db.execute(
-            text(f"""
-                SELECT COUNT(*) FROM employees e
-                JOIN areas a ON a.id = e.area_id
-                WHERE {where_clause}
-            """), params,
-        ).scalar()
-
-        params.update({"limit": page_size, "offset": offset})
-        rows = db.execute(
-            text(f"""
-                SELECT * FROM v_employees e_v
-                JOIN employees e ON e.id = e_v.id
-                JOIN areas a ON a.id = e.area_id
-                WHERE {where_clause}
-                ORDER BY e_v.id
-                LIMIT :limit OFFSET :offset
-            """), params,
-        ).fetchall()
-
-        return jsonify({
-            "total": total,
-            "page": page,
-            "page_size": page_size,
-            "items": [_row_to_dict(r) for r in rows],
-        })
 
 
 @app.get("/employees/<int:employee_id>")

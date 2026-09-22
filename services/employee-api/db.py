@@ -14,6 +14,7 @@ import os
 from google.cloud.sql.connector import Connector
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from google.cloud.sql.connector import Connector, IPTypes 
 
 INSTANCE_CONNECTION_NAME = os.environ["INSTANCE_CONNECTION_NAME"]
 DB_USER = os.environ["DB_USER"]
@@ -30,8 +31,8 @@ def _getconn():
         user=DB_USER,
         password=DB_PASSWORD,
         db=DB_NAME,
+        ip_type=IPTypes.PRIVATE,  
     )
-
 
 engine = create_engine("postgresql+pg8000://", creator=_getconn, pool_size=5, max_overflow=2, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
