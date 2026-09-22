@@ -1,0 +1,48 @@
+# Cloud Build para el servicio "easyhr-frontend".
+# Se dispara automáticamente (vía el trigger creado en infra/07_cicd_triggers.sh)
+# cuando hay un push que toca esta carpeta. Construye la imagen, la publica en
+# Artifact Registry con el tag = short SHA del commit (permite rollback) y
+# despliega esa imagen a Cloud Run SIN tocar el resto de la configuración
+# (env vars, VPC connector, Cloud SQL, secretos) que ya fue definida una vez
+# en infra/06_deploy_cloud_run.sh.
+steps:
+  - id: build
+    name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:latest'
+      - '.'
+    dir: 'frontend'
+
+  - id: push
+    name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend'
+
+  - id: deploy
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - 'easyhr-frontend'
+      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${SHORT_SHA}'
+      - '--region=${_REGION}'
+      - '--project=${PROJECT_ID}'
+      - '--quiet'
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:latest'
+
+substitutions:
+  _REGION: us-central1
+  _REPO: easyhr-repo
+
+options:
+  logging: CLOUD_LOGGING_ONLY

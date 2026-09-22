@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Asistente · Pick'Os Easy HR{% endblock %}
+{% block content %}
+<section class="hero">
+  <span class="badge">ASISTENTE DE RH</span>
+  <h1 class="hero__title">Pregúntale a Easy HR</h1>
+  <p class="hero__subtitle">
+    Cumpleaños, vacaciones y descripciones de puesto — todo en un solo chat,
+    coordinado por el Agent Master de Pick'Os.
+  </p>
+</section>
+
+<section class="chat-card">
+  <div id="chat-log" class="chat-log" aria-live="polite">
+    <div class="chat-bubble chat-bubble--agent">
+      ¡Hola! Soy el asistente de Easy HR de Pick'Os. Puedo ayudarte a:
+      <ul>
+        <li>Ver quién cumple años esta semana y generar sus tarjetas 🎂</li>
+        <li>Calcular los días de vacaciones disponibles de alguien 🏖️</li>
+        <li>Redactar una descripción de puesto para publicar 📋</li>
+      </ul>
+      ¿En qué te ayudo hoy?
+    </div>
+  </div>
+
+  <form id="chat-form" class="chat-form">
+    <input id="chat-input" class="chat-input" type="text" placeholder="Escribe tu pregunta para Easy HR..." autocomplete="off" required />
+    <button type="submit" class="btn btn--primary">Enviar</button>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='chat.js') }}"></script>
+{% endblock %}

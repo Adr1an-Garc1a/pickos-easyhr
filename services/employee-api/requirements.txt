@@ -1,0 +1,6 @@
+Flask==3.0.3
+gunicorn==22.0.0
+cloud-sql-python-connector[pg8000]==1.12.1
+SQLAlchemy==2.0.35
+google-cloud-secret-manager==2.20.2
+google-auth==2.34.0

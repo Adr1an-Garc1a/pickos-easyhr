@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Pick'Os · Easy HR{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <div class="page">
+    <nav class="pill-nav">
+      <div class="pill-nav__logo">
+        <span class="pill-nav__mark">P</span>
+        <span>Pick'Os <em>Easy HR</em></span>
+      </div>
+      <div class="pill-nav__links">
+        <a href="{{ url_for('index') }}" class="pill-nav__link {{ 'is-active' if active == 'chat' else '' }}">Asistente</a>
+        <a href="{{ url_for('empleados_page') }}" class="pill-nav__link {{ 'is-active' if active == 'empleados' else '' }}">Empleados</a>
+      </div>
+    </nav>
+
+    <main class="page__content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="page__footer">
+      Pick'Os · Data Centers &amp; Licitaciones · Easy HR — ambiente de prueba
+    </footer>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

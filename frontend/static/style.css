@@ -1,0 +1,181 @@
+/* =============================================================================
+   Pick'Os · Easy HR — Sistema de diseño
+   Adaptado de la ESTRUCTURA de tokens del DESIGN.md proporcionado (radios,
+   spacing, sombras, tipografía), pero recoloreado a la identidad de marca
+   real de Pick'Os: AZUL y BLANCO (empresa de TI / data centers), en vez de
+   la paleta índigo/crema original de ese archivo de referencia.
+   ============================================================================= */
+
+:root {
+  /* --- Colores de marca Pick'Os --- */
+  --color-primary: #0B3D91;        /* Azul Pick'Os — CTAs, nav activo, acentos */
+  --color-primary-dark: #082B68;   /* Azul profundo — hover, headlines fuertes */
+  --color-primary-light: #3E7CB1;  /* Azul claro — badges, subtítulos */
+  --color-accent: #1E88E5;         /* Azul vívido — enlaces, focos */
+  --color-ink: #0A1F33;            /* Texto principal, casi-negro azulado */
+  --color-stone: #4C5B6B;          /* Texto secundario */
+  --color-white: #FFFFFF;
+  --color-canvas: #F4F7FB;         /* Fondo de página, blanco azulado */
+  --color-border: #DCE5F0;
+  --color-success: #1E7B34;
+  --color-danger: #B3261E;
+
+  /* --- Tipografía (una sola familia sans, tono corporativo/tecnológico) --- */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --text-caption: 12px;
+  --text-body-sm: 14px;
+  --text-body: 16px;
+  --text-subheading: 20px;
+  --text-heading-sm: 24px;
+  --text-heading: 32px;
+  --text-heading-lg: 48px;
+
+  /* --- Espaciado (mismo ritmo base 8px del DESIGN.md) --- */
+  --spacing-8: 8px;   --spacing-16: 16px; --spacing-24: 24px; --spacing-32: 32px;
+  --spacing-40: 40px; --spacing-64: 64px; --spacing-80: 80px;
+
+  /* --- Radios (mismos valores nombrados del DESIGN.md) --- */
+  --radius-nav: 100px;
+  --radius-cards: 16px;
+  --radius-buttons: 1600px;   /* pill total */
+  --radius-badges: 1600px;
+
+  /* --- Sombras (mismo patrón de doble sombra, tinte frío azul en vez de cálido) --- */
+  --shadow-sm: rgba(11, 61, 145, 0.06) 0px 4px 4px 0px, rgba(11, 61, 145, 0.06) 0px 16px 16px 0px;
+  --shadow-md: rgba(11, 61, 145, 0.08) 0px 8px 16px 0px, rgba(11, 61, 145, 0.05) 0px 24px 32px 0px;
+  --shadow-lg: rgba(11, 61, 145, 0.10) 0px 12px 24px 0px, rgba(11, 61, 145, 0.10) 0px 48px 48px 0px;
+
+  --page-max-width: 1100px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: var(--text-body);
+  line-height: 1.6;
+}
+
+.page {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-24) var(--spacing-16) var(--spacing-64);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+/* --- Navegación tipo pill --- */
+.pill-nav {
+  background: var(--color-white);
+  border-radius: var(--radius-nav);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+}
+.pill-nav__logo { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--color-primary-dark); }
+.pill-nav__logo em { font-style: normal; color: var(--color-accent); font-weight: 500; }
+.pill-nav__mark {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--color-primary); color: var(--color-white);
+  display: flex; align-items: center; justify-content: center; font-weight: 700;
+}
+.pill-nav__links { display: flex; gap: 8px; }
+.pill-nav__link {
+  text-decoration: none; color: var(--color-stone); font-weight: 500;
+  font-size: var(--text-body-sm); padding: 8px 16px; border-radius: var(--radius-buttons);
+}
+.pill-nav__link.is-active, .pill-nav__link:hover { background: var(--color-canvas); color: var(--color-primary-dark); }
+
+/* --- Hero / encabezados de sección --- */
+.hero { text-align: center; padding: var(--spacing-40) 0 var(--spacing-16); }
+.hero--compact { padding: var(--spacing-16) 0; text-align: left; }
+.hero__title { font-size: var(--text-heading-lg); margin: var(--spacing-16) 0 var(--spacing-8); color: var(--color-primary-dark); font-weight: 700; }
+.hero--compact .hero__title { font-size: var(--text-heading); }
+.hero__subtitle { color: var(--color-stone); font-size: var(--text-subheading); max-width: 640px; margin: 0 auto; }
+.hero--compact .hero__subtitle { margin: 0; }
+
+.badge {
+  display: inline-block; background: #E3ECFB; color: var(--color-primary-dark);
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em;
+  padding: 6px 16px; border-radius: var(--radius-badges);
+}
+
+/* --- Botones --- */
+.btn {
+  border: none; cursor: pointer; font-family: var(--font-sans); font-weight: 500;
+  font-size: var(--text-body-sm); padding: 10px 22px; border-radius: var(--radius-buttons);
+}
+.btn--primary { background: var(--color-primary); color: var(--color-white); box-shadow: var(--shadow-sm); }
+.btn--primary:hover { background: var(--color-primary-dark); }
+.btn--ghost { background: transparent; color: var(--color-primary-dark); }
+.btn--ghost:hover { text-decoration: underline; }
+
+/* --- Tarjeta blanca genérica --- */
+.white-card {
+  background: var(--color-white); border-radius: var(--radius-cards);
+  padding: var(--spacing-32); box-shadow: var(--shadow-md);
+}
+
+/* --- Chat --- */
+.chat-card {
+  background: var(--color-white); border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-lg); padding: var(--spacing-24);
+  display: flex; flex-direction: column; gap: var(--spacing-16);
+}
+.chat-log {
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 480px; overflow-y: auto; padding-right: 4px;
+}
+.chat-bubble {
+  padding: 14px 18px; border-radius: var(--radius-cards); max-width: 80%;
+  font-size: var(--text-body-sm); white-space: pre-wrap; line-height: 1.5;
+}
+.chat-bubble--user { align-self: flex-end; background: var(--color-primary); color: var(--color-white); border-bottom-right-radius: 4px; }
+.chat-bubble--agent { align-self: flex-start; background: var(--color-canvas); color: var(--color-ink); border-bottom-left-radius: 4px; }
+.chat-bubble a { color: inherit; font-weight: 600; text-decoration: underline; }
+.chat-form { display: flex; gap: 12px; }
+.chat-input {
+  flex: 1; padding: 12px 18px; border-radius: var(--radius-buttons);
+  border: 1px solid var(--color-border); font-family: var(--font-sans); font-size: var(--text-body-sm);
+}
+.chat-input:focus { outline: 2px solid var(--color-accent); }
+
+/* --- Toolbar / filtros (pantalla de empleados) --- */
+.toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.select-input {
+  padding: 12px 18px; border-radius: var(--radius-buttons); border: 1px solid var(--color-border);
+  font-family: var(--font-sans); font-size: var(--text-body-sm); background: var(--color-white);
+}
+
+/* --- Tabla --- */
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-body-sm); }
+.table th { text-align: left; color: var(--color-stone); font-weight: 600; padding: 10px 12px; border-bottom: 2px solid var(--color-border); }
+.table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); }
+.table tr:hover td { background: var(--color-canvas); }
+.table .link-action { color: var(--color-accent); cursor: pointer; font-weight: 500; margin-right: 12px; }
+.table .link-action.danger { color: var(--color-danger); }
+
+.pagination { display: flex; gap: 8px; justify-content: flex-end; margin-top: var(--spacing-16); }
+.pagination button {
+  border: 1px solid var(--color-border); background: var(--color-white); border-radius: var(--radius-buttons);
+  padding: 6px 14px; cursor: pointer; font-size: var(--text-body-sm);
+}
+.pagination button.is-active { background: var(--color-primary); color: var(--color-white); border-color: var(--color-primary); }
+
+/* --- Modal de alta/edición --- */
+.dialog { border: none; border-radius: var(--radius-cards); padding: 0; box-shadow: var(--shadow-lg); }
+.dialog::backdrop { background: rgba(10, 31, 51, 0.4); }
+.dialog__form { padding: var(--spacing-32); display: flex; flex-direction: column; gap: 12px; min-width: 340px; }
+.dialog__form label { display: flex; flex-direction: column; gap: 4px; font-size: var(--text-body-sm); color: var(--color-stone); }
+.dialog__form input, .dialog__form select {
+  padding: 10px 14px; border-radius: 10px; border: 1px solid var(--color-border); font-family: var(--font-sans);
+}
+.dialog__actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: var(--spacing-8); }
+
+.page__footer { text-align: center; color: var(--color-stone); font-size: var(--text-caption); }

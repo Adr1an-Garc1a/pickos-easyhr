@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Empleados · Pick'Os Easy HR{% endblock %}
+{% block content %}
+<section class="hero hero--compact">
+  <span class="badge">RECURSOS HUMANOS</span>
+  <h1 class="hero__title">Empleados de Pick'Os</h1>
+  <p class="hero__subtitle">Alta, edición, baja y consulta del directorio de la empresa.</p>
+</section>
+
+<section class="toolbar">
+  <input id="search-input" class="chat-input" type="text" placeholder="Buscar por nombre o apellido..." />
+  <select id="area-filter" class="select-input">
+    <option value="">Todas las áreas</option>
+  </select>
+  <button id="btn-new-employee" class="btn btn--primary">+ Nuevo empleado</button>
+</section>
+
+<section class="white-card">
+  <table class="table" id="employees-table">
+    <thead>
+      <tr>
+        <th>ID</th><th>Nombre</th><th>Rol</th><th>Área</th><th>Gerente</th>
+        <th>Ingreso</th><th>Nacimiento</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="employees-tbody"></tbody>
+  </table>
+  <div id="pagination" class="pagination"></div>
+</section>
+
+<dialog id="employee-dialog" class="dialog">
+  <form id="employee-form" class="dialog__form">
+    <h2 id="dialog-title">Nuevo empleado</h2>
+    <input type="hidden" id="f-id" />
+    <label>Nombre <input required id="f-nombre" /></label>
+    <label>Apellido paterno <input required id="f-apellido-paterno" /></label>
+    <label>Apellido materno <input required id="f-apellido-materno" /></label>
+    <label>Fecha de nacimiento <input required type="date" id="f-fecha-nacimiento" /></label>
+    <label>Fecha de ingreso <input required type="date" id="f-fecha-ingreso" /></label>
+    <label>Rol <input required id="f-rol" /></label>
+    <label>Área
+      <select required id="f-area"></select>
+    </label>
+    <label>Gerente (ID, opcional) <input type="number" id="f-gerente-id" /></label>
+    <label>Email (opcional) <input type="email" id="f-email" /></label>
+    <div class="dialog__actions">
+      <button type="button" id="btn-cancel" class="btn btn--ghost">Cancelar</button>
+      <button type="submit" class="btn btn--primary">Guardar</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='employees.js') }}"></script>
+{% endblock %}
