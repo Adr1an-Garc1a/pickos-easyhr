@@ -76,8 +76,8 @@ de entrada público.
 ## 3. Estructura del repositorio
 
 ```
-infra/                  # Scripts .sh para correr en Cloud Shell (00 → 07, en orden)
-db/                      # schema.sql + seed_employees.py (50 empleados dummy)
+infra/                  # Scripts .sh para correr en Cloud Shell (00 → 07, en orden; 99 = teardown)
+db/                      # schema.sql + seed_data.sql (50 empleados dummy) + seed_employees.py
 services/
   employee-api/          # CRUD Flask + Cloud SQL (único servicio con acceso a la BD)
   birthday-agent/         # Agente ADK: cumpleaños + generación de tarjetas PDF/JPG
@@ -85,21 +85,24 @@ services/
   jobdesc-agent/            # Agente ADK: redacción de Job Descriptions
   agent-master/              # Coordinador ADK (decide a qué subagente delegar)
 frontend/                # Flask + HTML/CSS/JS, único servicio público
-cicd/                    # (reservado para configuración adicional de CI/CD)
 ```
 
 Cada carpeta de servicio tiene su propio `Dockerfile`, `requirements.txt` y
-`cloudbuild.yaml` — son unidades de despliegue independientes.
+`cloudbuild.yaml` — son unidades de despliegue independientes, cada una con
+su propio trigger de Cloud Build (ver sección 4.1).
 
 ## 4. Cómo desplegar desde cero (Cloud Shell)
 
 ```bash
 # 0) Clona este repo dentro de Cloud Shell y entra a la carpeta infra
 cd pickos-easyhr/infra
-cp variables.env variables.local.env   # edítalo con tu PROJECT_ID real, etc.
+cp variables.env variables.local.env   # ya viene pre-configurado para
+                                        # adr-garcia-pickos-easyhr; ajusta si
+                                        # usas otro proyecto/repo
 source variables.local.env
 
-# 1) Infraestructura base (en este orden)
+# 1) Infraestructura base (en este orden). 00_enable_apis.sh también borra
+#    la VPC "default" del proyecto, ya que se usa una VPC dedicada propia.
 bash 00_enable_apis.sh
 bash 01_network.sh
 bash 02_secrets_and_sql.sh
@@ -110,7 +113,10 @@ bash 04_service_accounts_iam.sh
 #    actuales para que el Job Description Agent tenga referencia:
 gcloud storage cp ./mis_puestos/*.pdf gs://${BUCKET_JOBDESC_REFS}/
 
-# 3) Construye las imágenes y despliega los 6 servicios
+# 3) Construye las imágenes y haz el PRIMER despliegue manual de los 6
+#    servicios. Esto crea cada Cloud Run con su configuración completa
+#    (VPC connector, Cloud SQL, secretos, service account, IAM entre
+#    servicios). Los pushes futuros por CI/CD reconstruyen sobre esta base.
 bash 05_build_images.sh
 bash 06_deploy_cloud_run.sh   # imprime la URL pública del frontend al final
 
@@ -137,15 +143,73 @@ bash 06_deploy_cloud_run.sh   # imprime la URL pública del frontend al final
 #    con --vpc-connector, o una VM de Compute Engine en la misma red) —
 #    nunca desde Cloud Shell.
 
-# 5) (Opcional) CI/CD con GitHub — requiere haber conectado tu repo una vez
-#    desde la consola de Cloud Build:
-cd ../infra
+# 5) CI/CD: conecta tu repo de GitHub (ver el paso a paso detallado en la
+#    sección 4.1 más abajo) y luego corre:
 bash 07_cicd_triggers.sh
 ```
 
-A partir de ahí, cada push a `main` que toque la carpeta de un servicio
-dispara automáticamente su build + deploy (ver `cloudbuild.yaml` de cada
-carpeta y `infra/07_cicd_triggers.sh`).
+A partir de ese último paso, **cada push a `main` dispara el trigger del
+servicio cuya carpeta tocaste** (uno de los 6, según qué archivos cambiaste)
+y ese build reconstruye la configuración completa de Cloud Run para ese
+servicio (VPC, secretos, URLs de sus dependencias obtenidas dinámicamente
+con `gcloud run services describe`, permisos de invocación) — no solo
+actualiza la imagen. Esto significa que el CI/CD puede incluso recrear un
+servicio desde cero si llegaras a borrarlo por error, sin depender de que
+alguien vuelva a correr `06_deploy_cloud_run.sh` a mano. Y como cada trigger
+está filtrado por carpeta (`--included-files`), tocar un solo servicio no
+reconstruye los otros 5.
+
+**Nota sobre permisos de Cloud Build:** como cada `cloudbuild.yaml` hace
+`gcloud run deploy` y `add-iam-policy-binding` por sí mismo, la cuenta de
+servicio de Cloud Build necesita `roles/run.admin`,
+`roles/iam.serviceAccountUser` y `roles/artifactregistry.writer` — el script
+`07_cicd_triggers.sh` se los otorga automáticamente antes de crear los 6
+triggers, así que no hay que hacerlo a mano.
+
+### 4.1 Cómo conectar tu repositorio de GitHub a Cloud Build (paso a paso)
+
+Esto solo se hace **una vez** por proyecto de GCP. Sin este paso,
+`07_cicd_triggers.sh` no va a encontrar ninguna conexión ni repositorio
+para usar.
+
+1. En la consola de GCP, ve a **Cloud Build → Triggers**
+   (`https://console.cloud.google.com/cloud-build/triggers`), asegurándote
+   de tener seleccionado el proyecto correcto (`adr-garcia-pickos-easyhr`)
+   arriba a la izquierda.
+2. Haz clic en **"Crear activador"** (Create Trigger) — no te preocupes por
+   llenar todo el formulario todavía, esto es solo para llegar al flujo de
+   conexión.
+3. En la sección **"Fuente" (Source)**, en el menú desplegable del
+   repositorio, elige **"Conectar nuevo repositorio"** (Connect new
+   repository).
+4. Elige **GitHub** como proveedor de código fuente y haz clic en
+   **"Continuar"**. Te va a pedir iniciar sesión con tu cuenta de GitHub si
+   no lo has hecho ya en este navegador.
+5. Se abre una ventana de GitHub pidiendo autorizar la app
+   **"Google Cloud Build"**. Tienes dos opciones:
+   - **"All repositories"**: le da acceso a todos tus repos (más simple).
+   - **"Only select repositories"**: elige específicamente
+     `Adr1an-Garc1a/pickos-easyhr` (más restrictivo, recomendado).
+   Haz clic en **"Install"** (o "Authorize", según el flujo que te muestre).
+6. De regreso en la consola de GCP, ahora debería aparecer
+   `Adr1an-Garc1a/pickos-easyhr` en la lista de repositorios disponibles.
+   Selecciónalo y marca la casilla de aceptar los términos de servicio de
+   Cloud Build si te la muestra. Haz clic en **"Conectar"**.
+7. En este punto ya tienes la CONEXIÓN creada (el repo está vinculado a tu
+   proyecto de GCP). **Puedes cerrar el formulario de "Crear activador" sin
+   terminarlo** — el trigger en sí lo va a crear el script
+   `07_cicd_triggers.sh` por ti, no hace falta hacerlo a mano aquí.
+8. Para confirmar que la conexión quedó bien, ve a Cloud Shell y corre:
+   ```bash
+   gcloud builds connections list --region=us-central1 --project=adr-garcia-pickos-easyhr
+   ```
+   Deberías ver una fila con el nombre de tu conexión (algo como
+   `github-adr1an-garc1a` o similar, dependiendo de cómo la haya nombrado
+   la consola automáticamente). Ese es el nombre que `07_cicd_triggers.sh`
+   te va a pedir que escribas cuando lo corras.
+9. Corre `bash 07_cicd_triggers.sh` — te va a mostrar esa misma lista de
+   conexiones y de repositorios, y solo tienes que copiar/pegar los nombres
+   exactos que veas cuando te los pida.
 
 ## 5. Probar la API de empleados directamente (CRUD)
 
@@ -196,4 +260,23 @@ AI pueda autenticarse contra Vertex AI con tus credenciales.
   autenticados, nunca con URLs públicas.
 - Todos los servicios salvo el frontend son `--no-allow-unauthenticated`;
   las invocaciones servicio-a-servicio requieren `roles/run.invoker`
-  otorgado explícitamente (ver el final de `infra/06_deploy_cloud_run.sh`).
+  otorgado explícitamente (ver el final de `infra/06_deploy_cloud_run.sh`
+  y de cada `cloudbuild.yaml`).
+
+## 8. Empezar desde cero (teardown)
+
+Si necesitas borrar todo y reconstruir desde cero **en el mismo proyecto**:
+
+```bash
+cd infra
+source variables.local.env
+bash 99_teardown.sh   # pide confirmar escribiendo el PROJECT_ID exacto
+```
+
+Borra, en orden seguro: triggers de Cloud Build → servicios de Cloud Run →
+Cloud SQL → buckets → Artifact Registry → secretos → cuentas de servicio →
+conector VPC → firewall/subred/peering → la VPC. Después vuelves a correr
+`00_enable_apis.sh` en adelante.
+
+Si prefieres no reusar el mismo Project ID, es más simple borrar el
+proyecto completo (`gcloud projects delete PROJECT_ID`) y crear uno nuevo.

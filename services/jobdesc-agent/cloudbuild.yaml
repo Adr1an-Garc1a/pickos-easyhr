@@ -1,19 +1,12 @@
-# Cloud Build para el servicio "easyhr-jobdesc-agent".
-# Se dispara automáticamente (vía el trigger creado en infra/07_cicd_triggers.sh)
-# cuando hay un push que toca esta carpeta. Construye la imagen, la publica en
-# Artifact Registry con el tag = short SHA del commit (permite rollback) y
-# despliega esa imagen a Cloud Run SIN tocar el resto de la configuración
-# (env vars, VPC connector, Cloud SQL, secretos) que ya fue definida una vez
-# en infra/06_deploy_cloud_run.sh.
 steps:
   - id: build
     name: 'gcr.io/cloud-builders/docker'
     args:
       - build
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/jobdesc-agent:${SHORT_SHA}'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/jobdesc-agent:${SHORT_SHA}'
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/jobdesc-agent:latest'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/jobdesc-agent:latest'
       - '.'
     dir: 'services/jobdesc-agent'
 
@@ -22,27 +15,41 @@ steps:
     args:
       - push
       - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/jobdesc-agent'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/jobdesc-agent'
 
   - id: deploy
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - deploy
-      - 'easyhr-jobdesc-agent'
-      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/jobdesc-agent:${SHORT_SHA}'
-      - '--region=${_REGION}'
-      - '--project=${PROJECT_ID}'
-      - '--quiet'
+      - '-c'
+      - |
+        set -e
+        EMPLOYEE_API_URL=$(gcloud run services describe easyhr-employee-api \
+          --project="$PROJECT_ID" --region="${_REGION}" --format='value(status.url)')
+
+        gcloud run deploy easyhr-jobdesc-agent \
+          --image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/jobdesc-agent:${SHORT_SHA}" \
+          --region="${_REGION}" --project="$PROJECT_ID" \
+          --service-account="easyhr-jobdesc-agent-sa@$PROJECT_ID.iam.gserviceaccount.com" \
+          --set-env-vars="EMPLOYEE_API_URL=${EMPLOYEE_API_URL},BUCKET_JOBDESC_REFS=$PROJECT_ID-jobdesc-references,GOOGLE_GENAI_USE_VERTEXAI=${_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL}" \
+          --no-allow-unauthenticated \
+          --min-instances=0 --max-instances=2 --cpu=1 --memory=1Gi --concurrency=5 \
+          --quiet
+
+        gcloud run services add-iam-policy-binding easyhr-employee-api \
+          --project="$PROJECT_ID" --region="${_REGION}" \
+          --member="serviceAccount:easyhr-jobdesc-agent-sa@$PROJECT_ID.iam.gserviceaccount.com" \
+          --role="roles/run.invoker" --quiet
 
 images:
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/jobdesc-agent:${SHORT_SHA}'
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/jobdesc-agent:latest'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/jobdesc-agent:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/jobdesc-agent:latest'
 
 substitutions:
   _REGION: us-central1
   _REPO: easyhr-repo
+  _USE_VERTEXAI: "TRUE"
+  _GEMINI_MODEL: gemini-2.5-flash
 
 options:
   logging: CLOUD_LOGGING_ONLY

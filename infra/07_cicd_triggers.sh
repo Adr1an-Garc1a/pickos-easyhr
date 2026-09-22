@@ -1,14 +1,29 @@
 #!/usr/bin/env bash
-# Crea un Cloud Build Trigger por servicio, usando una conexión de GitHub de
-# 2da generación (Developer Connect) — la que se crea hoy en día al usar
-# "Cloud Build > Triggers > Conectar repositorio" desde la consola. Esas
-# conexiones ya NO aceptan las flags viejas --repo-name/--repo-owner; hay que
-# usar --repository apuntando al recurso completo del repo conectado.
+# Crea un Cloud Build Trigger POR SERVICIO (6 en total), cada uno disparado
+# solo cuando un push modifica archivos dentro de la carpeta de ESE servicio.
 #
-# Prerrequisito: haber conectado el repositorio una sola vez desde la consola
-# (Cloud Build > Repositorios de 2.ª generación > Conectar repositorio host,
-# o Triggers > Crear activador > Conectar nuevo repositorio).
+# Usa una conexión de GitHub de 2da generación (Developer Connect) — la que
+# se crea hoy en día al usar "Cloud Build > Triggers > Conectar repositorio"
+# desde la consola (ver sección 4.1 del README para el paso a paso).
+# Prerrequisito: haber conectado el repositorio una sola vez desde ahí antes
+# de correr este script.
 set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Cada cloudbuild.yaml hace `gcloud run deploy` y
+# `gcloud run services add-iam-policy-binding` por sí mismo (para que el
+# CI/CD sea autosuficiente). Eso lo ejecuta la cuenta de servicio de Cloud
+# Build, que en proyectos nuevos NO trae permisos de Cloud Run ni de actuar
+# como otras cuentas de servicio por default. Se los damos aquí una sola vez.
+# ---------------------------------------------------------------------------
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+CLOUDBUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+
+echo ">> Otorgando permisos a la cuenta de servicio de Cloud Build (${CLOUDBUILD_SA})..."
+for role in roles/run.admin roles/iam.serviceAccountUser roles/artifactregistry.writer; do
+  gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+    --member="serviceAccount:${CLOUDBUILD_SA}" --role="${role}" --condition=None --quiet
+done
 
 # Región donde vive la CONEXIÓN (no es necesariamente la misma que REGION de
 # Cloud Run/Cloud SQL). Ajusta si tu conexión está en otra región.
@@ -23,7 +38,7 @@ echo ">> Buscando repositorios vinculados a la conexión '${CONNECTION_NAME}'...
 gcloud builds connections repositories list \
   --connection="${CONNECTION_NAME}" --region="${CONNECTION_REGION}" --project="${PROJECT_ID}"
 
-read -rp "Nombre exacto del repositorio (columna REPOSITORY de arriba, ej. Adr1an-Garc1a-pickos-easyhr): " REPO_RESOURCE_NAME
+read -rp "Nombre exacto del repositorio (columna REPOSITORY de arriba): " REPO_RESOURCE_NAME
 
 REPOSITORY="projects/${PROJECT_ID}/locations/${CONNECTION_REGION}/connections/${CONNECTION_NAME}/repositories/${REPO_RESOURCE_NAME}"
 echo ">> Usando repositorio: ${REPOSITORY}"
@@ -49,6 +64,8 @@ create_trigger "easyhr-jobdesc-agent"  "services/jobdesc-agent"
 create_trigger "easyhr-agent-master"   "services/agent-master"
 create_trigger "easyhr-frontend"       "frontend"
 
-echo ">> Triggers de CI/CD listos. Cada push a la rama que coincida con"
-echo "   GITHUB_BRANCH y que toque la carpeta del servicio disparará un build"
-echo "   + deploy automático de ESE servicio únicamente."
+echo ""
+echo ">> Triggers de CI/CD listos (6 en total). Cada push a la rama que"
+echo "   coincida con GITHUB_BRANCH (${GITHUB_BRANCH}) y que toque la"
+echo "   carpeta de un servicio disparará el build + deploy de ESE"
+echo "   servicio únicamente."

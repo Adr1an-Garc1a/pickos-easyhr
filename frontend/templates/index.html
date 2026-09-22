@@ -10,22 +10,52 @@
   </p>
 </section>
 
+<section class="quick-actions" aria-label="Preguntas frecuentes">
+  <button type="button" class="quick-chip" data-prompt="¿Quién cumple años esta semana?">
+    <span class="quick-chip__icon">🎂</span>
+    <span>¿Quién cumple años esta semana?</span>
+  </button>
+  <button type="button" class="quick-chip" data-prompt="¿Cuántos días de vacaciones tiene disponibles ">
+    <span class="quick-chip__icon">🏖️</span>
+    <span>Días de vacaciones de alguien</span>
+  </button>
+  <button type="button" class="quick-chip" data-prompt="Necesito una descripción de puesto para ">
+    <span class="quick-chip__icon">📋</span>
+    <span>Crear una descripción de puesto</span>
+  </button>
+</section>
+
 <section class="chat-card">
+  <div class="chat-card__header">
+    <span class="chat-status">
+      <span class="chat-status__dot"></span>
+      Agent Master en línea
+    </span>
+  </div>
+
   <div id="chat-log" class="chat-log" aria-live="polite">
-    <div class="chat-bubble chat-bubble--agent">
-      ¡Hola! Soy el asistente de Easy HR de Pick'Os. Puedo ayudarte a:
-      <ul>
-        <li>Ver quién cumple años esta semana y generar sus tarjetas 🎂</li>
-        <li>Calcular los días de vacaciones disponibles de alguien 🏖️</li>
-        <li>Redactar una descripción de puesto para publicar 📋</li>
-      </ul>
-      ¿En qué te ayudo hoy?
+    <div class="chat-row chat-row--agent">
+      <span class="avatar avatar--agent">P</span>
+      <div class="chat-bubble chat-bubble--agent">
+        ¡Hola! Soy el asistente de Easy HR de Pick'Os. Puedo ayudarte a:
+        <ul>
+          <li>Ver quién cumple años esta semana y generar sus tarjetas 🎂</li>
+          <li>Calcular los días de vacaciones disponibles de alguien 🏖️</li>
+          <li>Redactar una descripción de puesto para publicar 📋</li>
+        </ul>
+        ¿En qué te ayudo hoy? Puedes usar los botones de arriba o escribir tu pregunta.
+      </div>
     </div>
   </div>
 
   <form id="chat-form" class="chat-form">
     <input id="chat-input" class="chat-input" type="text" placeholder="Escribe tu pregunta para Easy HR..." autocomplete="off" required />
-    <button type="submit" class="btn btn--primary">Enviar</button>
+    <button type="submit" class="btn btn--primary btn--send">
+      <span>Enviar</span>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.5 8H14.5M14.5 8L8.5 2M14.5 8L8.5 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
   </form>
 </section>
 {% endblock %}

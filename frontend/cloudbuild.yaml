@@ -1,19 +1,12 @@
-# Cloud Build para el servicio "easyhr-frontend".
-# Se dispara automáticamente (vía el trigger creado en infra/07_cicd_triggers.sh)
-# cuando hay un push que toca esta carpeta. Construye la imagen, la publica en
-# Artifact Registry con el tag = short SHA del commit (permite rollback) y
-# despliega esa imagen a Cloud Run SIN tocar el resto de la configuración
-# (env vars, VPC connector, Cloud SQL, secretos) que ya fue definida una vez
-# en infra/06_deploy_cloud_run.sh.
 steps:
   - id: build
     name: 'gcr.io/cloud-builders/docker'
     args:
       - build
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${SHORT_SHA}'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:${SHORT_SHA}'
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:latest'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:latest'
       - '.'
     dir: 'frontend'
 
@@ -22,23 +15,41 @@ steps:
     args:
       - push
       - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend'
 
   - id: deploy
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - deploy
-      - 'easyhr-frontend'
-      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${SHORT_SHA}'
-      - '--region=${_REGION}'
-      - '--project=${PROJECT_ID}'
-      - '--quiet'
+      - '-c'
+      - |
+        set -e
+        AGENT_MASTER_URL=$(gcloud run services describe easyhr-agent-master \
+          --project="$PROJECT_ID" --region="${_REGION}" --format='value(status.url)')
+        EMPLOYEE_API_URL=$(gcloud run services describe easyhr-employee-api \
+          --project="$PROJECT_ID" --region="${_REGION}" --format='value(status.url)')
+        BIRTHDAY_URL=$(gcloud run services describe easyhr-birthday-agent \
+          --project="$PROJECT_ID" --region="${_REGION}" --format='value(status.url)')
+
+        gcloud run deploy easyhr-frontend \
+          --image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:${SHORT_SHA}" \
+          --region="${_REGION}" --project="$PROJECT_ID" \
+          --service-account="easyhr-frontend-sa@$PROJECT_ID.iam.gserviceaccount.com" \
+          --set-env-vars="AGENT_MASTER_URL=${AGENT_MASTER_URL},EMPLOYEE_API_URL=${EMPLOYEE_API_URL},BIRTHDAY_AGENT_URL=${BIRTHDAY_URL}" \
+          --allow-unauthenticated \
+          --min-instances=0 --max-instances=3 --cpu=1 --memory=512Mi --concurrency=40 \
+          --quiet
+
+        for svc in easyhr-employee-api easyhr-agent-master easyhr-birthday-agent; do
+          gcloud run services add-iam-policy-binding "$svc" \
+            --project="$PROJECT_ID" --region="${_REGION}" \
+            --member="serviceAccount:easyhr-frontend-sa@$PROJECT_ID.iam.gserviceaccount.com" \
+            --role="roles/run.invoker" --quiet
+        done
 
 images:
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${SHORT_SHA}'
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:latest'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:latest'
 
 substitutions:
   _REGION: us-central1

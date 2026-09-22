@@ -1,19 +1,15 @@
-# Cloud Build para el servicio "easyhr-employee-api".
-# Se dispara automáticamente (vía el trigger creado en infra/07_cicd_triggers.sh)
-# cuando hay un push que toca esta carpeta. Construye la imagen, la publica en
-# Artifact Registry con el tag = short SHA del commit (permite rollback) y
-# despliega esa imagen a Cloud Run SIN tocar el resto de la configuración
-# (env vars, VPC connector, Cloud SQL, secretos) que ya fue definida una vez
-# en infra/06_deploy_cloud_run.sh.
+# Cloud Build para "employee-api". Autosuficiente: en cada push, construye la
+# imagen y despliega el servicio COMPLETO (VPC connector, Cloud SQL, secretos,
+# env vars) — no depende de que ya exista de un deploy manual previo.
 steps:
   - id: build
     name: 'gcr.io/cloud-builders/docker'
     args:
       - build
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/employee-api:${SHORT_SHA}'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/employee-api:${SHORT_SHA}'
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/employee-api:latest'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/employee-api:latest'
       - '.'
     dir: 'services/employee-api'
 
@@ -22,27 +18,39 @@ steps:
     args:
       - push
       - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/employee-api'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/employee-api'
 
   - id: deploy
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - deploy
-      - 'easyhr-employee-api'
-      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/employee-api:${SHORT_SHA}'
-      - '--region=${_REGION}'
-      - '--project=${PROJECT_ID}'
-      - '--quiet'
+      - '-c'
+      - |
+        set -e
+        gcloud run deploy easyhr-employee-api \
+          --image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/employee-api:${SHORT_SHA}" \
+          --region="${_REGION}" --project="$PROJECT_ID" \
+          --service-account="easyhr-employee-api-sa@$PROJECT_ID.iam.gserviceaccount.com" \
+          --vpc-connector="${_VPC_CONNECTOR}" --vpc-egress=private-ranges-only \
+          --add-cloudsql-instances="$PROJECT_ID:${_REGION}:${_SQL_INSTANCE}" \
+          --set-env-vars="DB_NAME=${_DB_NAME},DB_USER=${_DB_USER},INSTANCE_CONNECTION_NAME=$PROJECT_ID:${_REGION}:${_SQL_INSTANCE}" \
+          --set-secrets="DB_PASSWORD=${_SECRET_DB_PASSWORD}:latest" \
+          --no-allow-unauthenticated \
+          --min-instances=0 --max-instances=2 --cpu=1 --memory=512Mi --concurrency=20 \
+          --quiet
 
 images:
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/employee-api:${SHORT_SHA}'
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/employee-api:latest'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/employee-api:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/employee-api:latest'
 
 substitutions:
   _REGION: us-central1
   _REPO: easyhr-repo
+  _SQL_INSTANCE: easyhr-sql
+  _VPC_CONNECTOR: easyhr-connector
+  _DB_NAME: easyhr
+  _DB_USER: easyhr_app
+  _SECRET_DB_PASSWORD: easyhr-db-password
 
 options:
   logging: CLOUD_LOGGING_ONLY

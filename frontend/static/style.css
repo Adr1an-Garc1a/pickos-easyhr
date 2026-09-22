@@ -179,3 +179,128 @@ body {
 .dialog__actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: var(--spacing-8); }
 
 .page__footer { text-align: center; color: var(--color-stone); font-size: var(--text-caption); }
+
+/* =============================================================================
+   Animaciones y elementos dinámicos (para que el sistema se sienta vivo,
+   pensado para alguien que no está acostumbrado a usar herramientas técnicas)
+   ============================================================================= */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulseDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(30, 123, 52, 0.5); }
+  50% { box-shadow: 0 0 0 5px rgba(30, 123, 52, 0); }
+}
+
+.page { animation: fadeIn 0.4s ease-out; }
+
+.btn { transition: background-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease; }
+.btn:active { transform: scale(0.97); }
+.btn--primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.pill-nav__link { transition: background-color 0.15s ease, color 0.15s ease; }
+.link-action { transition: opacity 0.15s ease; }
+.link-action:hover { opacity: 0.65; }
+
+/* --- Chips de sugerencia (preguntas frecuentes, para no partir de cero) --- */
+.quick-actions {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.quick-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--color-white); border: 1px solid var(--color-border);
+  border-radius: var(--radius-buttons); padding: 10px 18px;
+  font-family: var(--font-sans); font-size: var(--text-body-sm); font-weight: 500;
+  color: var(--color-primary-dark); cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  animation: fadeInUp 0.4s ease-out backwards;
+}
+.quick-chip:nth-child(1) { animation-delay: 0.05s; }
+.quick-chip:nth-child(2) { animation-delay: 0.12s; }
+.quick-chip:nth-child(3) { animation-delay: 0.19s; }
+.quick-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-light);
+  background: #F7FAFF;
+}
+.quick-chip__icon { font-size: 16px; }
+
+/* --- Encabezado del chat con estado "en línea" --- */
+.chat-card__header {
+  display: flex; justify-content: flex-end; margin-bottom: -4px;
+}
+.chat-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--text-caption); color: var(--color-stone); font-weight: 500;
+}
+.chat-status__dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--color-success);
+  animation: statusPulse 2s infinite;
+}
+
+/* --- Filas de chat con avatar, animadas al entrar --- */
+.chat-row {
+  display: flex; align-items: flex-end; gap: 10px;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+.chat-row--visible { opacity: 1; transform: translateY(0); }
+.chat-row--user { flex-direction: row-reverse; }
+
+.avatar {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.avatar--agent { background: var(--color-primary); color: var(--color-white); }
+.avatar--user { background: #E3ECFB; color: var(--color-primary-dark); }
+
+.chat-bubble { max-width: 76%; }
+
+/* --- Indicador de "escribiendo…" con puntitos animados --- */
+.typing-bubble { display: flex; align-items: center; gap: 5px; padding: 16px 20px; }
+.typing-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--color-primary-light);
+  animation: pulseDot 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* --- Botón de enviar con ícono --- */
+.btn--send { display: flex; align-items: center; gap: 8px; }
+.btn--send svg { transition: transform 0.15s ease; }
+.btn--send:hover svg { transform: translateX(2px); }
+
+/* --- Filas de la tabla de empleados: aparición escalonada --- */
+.table tbody tr {
+  animation: fadeInUp 0.3s ease-out backwards;
+}
+.table tbody tr:nth-child(1) { animation-delay: 0.02s; }
+.table tbody tr:nth-child(2) { animation-delay: 0.04s; }
+.table tbody tr:nth-child(3) { animation-delay: 0.06s; }
+.table tbody tr:nth-child(4) { animation-delay: 0.08s; }
+.table tbody tr:nth-child(5) { animation-delay: 0.10s; }
+.table tbody tr:nth-child(n+6) { animation-delay: 0.12s; }
+
+/* --- Diálogo modal: aparición suave --- */
+.dialog[open] { animation: fadeInUp 0.25s ease-out; }
+.dialog::backdrop { animation: fadeIn 0.2s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
