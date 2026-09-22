@@ -11,10 +11,9 @@ llega como variable de entorno inyectada por Cloud Run DESDE Secret Manager
 """
 
 import os
-from google.cloud.sql.connector import Connector
+from google.cloud.sql.connector import Connector, IPTypes
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from google.cloud.sql.connector import Connector, IPTypes 
 
 INSTANCE_CONNECTION_NAME = os.environ["INSTANCE_CONNECTION_NAME"]
 DB_USER = os.environ["DB_USER"]
@@ -31,8 +30,11 @@ def _getconn():
         user=DB_USER,
         password=DB_PASSWORD,
         db=DB_NAME,
-        ip_type=IPTypes.PRIVATE,  
+        ip_type=IPTypes.PRIVATE,  # la instancia solo tiene IP privada (--no-assign-ip);
+                                  # sin esto el conector intenta usar la IP pública por
+                                  # default y falla con CloudSQLIPTypeError.
     )
+
 
 engine = create_engine("postgresql+pg8000://", creator=_getconn, pool_size=5, max_overflow=2, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)

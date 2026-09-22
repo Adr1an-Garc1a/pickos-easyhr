@@ -26,8 +26,17 @@
     if (searchInput.value.trim()) params.set("search", searchInput.value.trim());
     if (areaFilter.value) params.set("area", areaFilter.value);
 
-    const res = await fetch(`/api/employees?${params.toString()}`);
-    const data = await res.json();
+    let data;
+    try {
+      const res = await fetch(`/api/employees?${params.toString()}`);
+      data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="8">Error al cargar empleados: ${err.message}</td></tr>`;
+      pagination.innerHTML = "";
+      console.error("Error cargando empleados:", err);
+      return;
+    }
 
     tbody.innerHTML = data.items.map((e) => `
       <tr>

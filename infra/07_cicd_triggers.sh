@@ -1,43 +1,53 @@
 #!/usr/bin/env bash
-# Conecta el repositorio de GitHub y crea un Cloud Build Trigger por servicio.
-# Cada trigger solo se dispara cuando cambian archivos dentro de su carpeta
-# (include-logs-path), construye la imagen y hace `gcloud run deploy` con la
-# imagen nueva, imagen por commit (SHORT_SHA) para poder hacer rollback.
+# Crea un Cloud Build Trigger por servicio, usando una conexión de GitHub de
+# 2da generación (Developer Connect) — la que se crea hoy en día al usar
+# "Cloud Build > Triggers > Conectar repositorio" desde la consola. Esas
+# conexiones ya NO aceptan las flags viejas --repo-name/--repo-owner; hay que
+# usar --repository apuntando al recurso completo del repo conectado.
 #
-# Prerrequisito: conecta tu repo de GitHub una sola vez desde la consola
-# (Cloud Build > Triggers > Conectar repositorio) o con:
-#   gcloud builds repositories create ...  (2nd-gen connections, requiere
-#   crear antes una conexión con gcloud builds connections create github ...)
-# Aquí se asume que la conexión ya existe con el nombre "github-connection".
+# Prerrequisito: haber conectado el repositorio una sola vez desde la consola
+# (Cloud Build > Repositorios de 2.ª generación > Conectar repositorio host,
+# o Triggers > Crear activador > Conectar nuevo repositorio).
 set -euo pipefail
 
-CONNECTION_NAME="github-connection"
+# Región donde vive la CONEXIÓN (no es necesariamente la misma que REGION de
+# Cloud Run/Cloud SQL). Ajusta si tu conexión está en otra región.
+CONNECTION_REGION="${CONNECTION_REGION:-$REGION}"
+
+echo ">> Buscando conexiones de GitHub en ${CONNECTION_REGION}..."
+gcloud builds connections list --region="${CONNECTION_REGION}" --project="${PROJECT_ID}"
+
+read -rp "Nombre exacto de tu conexión (columna NAME de arriba): " CONNECTION_NAME
+
+echo ">> Buscando repositorios vinculados a la conexión '${CONNECTION_NAME}'..."
+gcloud builds connections repositories list \
+  --connection="${CONNECTION_NAME}" --region="${CONNECTION_REGION}" --project="${PROJECT_ID}"
+
+read -rp "Nombre exacto del repositorio (columna REPOSITORY de arriba, ej. Adr1an-Garc1a-pickos-easyhr): " REPO_RESOURCE_NAME
+
+REPOSITORY="projects/${PROJECT_ID}/locations/${CONNECTION_REGION}/connections/${CONNECTION_NAME}/repositories/${REPO_RESOURCE_NAME}"
+echo ">> Usando repositorio: ${REPOSITORY}"
 
 create_trigger () {
-  local name="$1"; local dir="$2"; local image="$3"; local sa="$4"; local extra_deploy_args="${5:-}"
+  local name="$1"; local dir="$2"
   echo ">> Creando/actualizando trigger ${name}..."
   gcloud builds triggers create github \
     --project="${PROJECT_ID}" \
+    --region="${CONNECTION_REGION}" \
     --name="${name}" \
-    --repo-name="${GITHUB_REPO}" \
-    --repo-owner="${GITHUB_OWNER}" \
+    --repository="${REPOSITORY}" \
     --branch-pattern="${GITHUB_BRANCH}" \
     --included-files="${dir}/**" \
     --build-config="${dir}/cloudbuild.yaml" \
-    --substitutions="_IMAGE=${image},_SERVICE_ACCOUNT=$1,_REGION=${REGION},_REPO=${AR_REPO_NAME},_EXTRA_ARGS=${extra_deploy_args}" \
-    || echo "   (si ya existe, edítalo desde la consola o bórralo con gcloud builds triggers delete)"
+    || echo "   (si ya existe, edítalo desde la consola o bórralo con: gcloud builds triggers delete ${name} --region=${CONNECTION_REGION} --project=${PROJECT_ID})"
 }
 
-# Nota: cada cloudbuild.yaml (dentro de cada carpeta de servicio) construye
-# la imagen, la sube a Artifact Registry y despliega a Cloud Run usando los
-# nombres de servicio/variables definidos en variables.env vía substitutions.
-
-create_trigger "easyhr-employee-api"   "services/employee-api"   "employee-api"   "${SA_EMPLOYEE_API}"
-create_trigger "easyhr-birthday-agent" "services/birthday-agent" "birthday-agent" "${SA_BIRTHDAY}"
-create_trigger "easyhr-vacation-agent" "services/vacation-agent" "vacation-agent" "${SA_VACATION}"
-create_trigger "easyhr-jobdesc-agent"  "services/jobdesc-agent"  "jobdesc-agent"  "${SA_JOBDESC}"
-create_trigger "easyhr-agent-master"   "services/agent-master"   "agent-master"   "${SA_AGENT_MASTER}"
-create_trigger "easyhr-frontend"       "frontend"                "frontend"       "${SA_FRONTEND}"
+create_trigger "easyhr-employee-api"   "services/employee-api"
+create_trigger "easyhr-birthday-agent" "services/birthday-agent"
+create_trigger "easyhr-vacation-agent" "services/vacation-agent"
+create_trigger "easyhr-jobdesc-agent"  "services/jobdesc-agent"
+create_trigger "easyhr-agent-master"   "services/agent-master"
+create_trigger "easyhr-frontend"       "frontend"
 
 echo ">> Triggers de CI/CD listos. Cada push a la rama que coincida con"
 echo "   GITHUB_BRANCH y que toque la carpeta del servicio disparará un build"

@@ -114,12 +114,28 @@ gcloud storage cp ./mis_puestos/*.pdf gs://${BUCKET_JOBDESC_REFS}/
 bash 05_build_images.sh
 bash 06_deploy_cloud_run.sh   # imprime la URL pública del frontend al final
 
-# 4) Carga los 50 empleados dummy (requiere permisos de Secret Manager)
-cd ../db
-pip install -r requirements.txt --user
-export PROJECT_ID=... DB_NAME=easyhr DB_USER=easyhr_app
-export INSTANCE_CONNECTION_NAME="$(gcloud sql instances describe easyhr-sql --format='value(connectionName)')"
-python3 seed_employees.py
+# 4) Carga de datos: aplica el esquema y los 50 empleados dummy
+#
+#    IMPORTANTE: la instancia de Cloud SQL solo tiene IP PRIVADA, y Cloud
+#    Shell NO está dentro de tu VPC, así que no puede conectarse directo
+#    (ni el conector de Python, ni `gcloud sql connect`, ni psql). La forma
+#    más simple es usar Cloud SQL Studio (el editor SQL integrado en la
+#    consola, que corre del lado de Google y no requiere ruta de red):
+#
+#    1. Ve a Cloud SQL > easyhr-sql > Cloud SQL Studio (menú izquierdo).
+#    2. Inicia sesión con: base de datos "easyhr", usuario "easyhr_app" y
+#       la contraseña que está en Secret Manager (secreto "easyhr-db-password").
+#    3. Abre una pestaña nueva de consulta, pega TODO el contenido de
+#       db/schema.sql y dale "Run" (esto crea las tablas).
+#    4. Abre otra pestaña, pega TODO el contenido de db/seed_data.sql
+#       (ya viene con los 50 empleados pre-generados, sin necesidad de
+#       correr ningún script de Python) y dale "Run".
+#
+#    Alternativa (si quieres regenerar los datos dummy tú mismo en vez de
+#    usar el seed_data.sql ya incluido): corre `python3 seed_employees.py`
+#    desde ALGO que sí esté dentro de la VPC (por ejemplo, una Cloud Run Job
+#    con --vpc-connector, o una VM de Compute Engine en la misma red) —
+#    nunca desde Cloud Shell.
 
 # 5) (Opcional) CI/CD con GitHub — requiere haber conectado tu repo una vez
 #    desde la consola de Cloud Build:

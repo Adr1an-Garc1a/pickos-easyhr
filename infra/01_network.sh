@@ -61,7 +61,7 @@ gcloud compute networks vpc-access connectors create "${VPC_CONNECTOR_NAME}" \
   --region="${REGION}" \
   --network="${NETWORK_NAME}" \
   --range="${VPC_CONNECTOR_RANGE}" \
-  --machine-type=e2-micro \
+  --machine-type=f1-micro \
   --min-instances=2 \
   --max-instances=3
 

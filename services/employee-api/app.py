@@ -63,6 +63,19 @@ def _row_to_dict(row) -> dict:
         "activo": row.activo,
     }
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "employee-api"}
+
+
+@app.get("/areas")
+def list_areas():
+    with SessionLocal() as db:
+        rows = db.execute(text("SELECT id, nombre FROM areas ORDER BY nombre")).fetchall()
+        return jsonify([{"id": r.id, "nombre": r.nombre} for r in rows])
+
+
 @app.get("/employees")
 def list_employees():
     area = request.args.get("area")
@@ -106,21 +119,6 @@ def list_employees():
             "page_size": page_size,
             "items": [_row_to_dict(r) for r in rows],
         })
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "employee-api"}
-
-
-@app.get("/areas")
-def list_areas():
-    with SessionLocal() as db:
-        rows = db.execute(text("SELECT id, nombre FROM areas ORDER BY nombre")).fetchall()
-        return jsonify([{"id": r.id, "nombre": r.nombre} for r in rows])
-
-
-
 
 
 @app.get("/employees/<int:employee_id>")

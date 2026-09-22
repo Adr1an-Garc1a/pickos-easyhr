@@ -24,7 +24,7 @@ import os
 import random
 import datetime
 
-from google.cloud.sql.connector import Connector
+from google.cloud.sql.connector import Connector, IPTypes
 from google.cloud import secretmanager
 from faker import Faker
 
@@ -123,6 +123,10 @@ def main():
             user=DB_USER,
             password=get_db_password(),
             db=DB_NAME,
+            ip_type=IPTypes.PRIVATE,  # la instancia solo tiene IP privada; hay que
+                                      # correr esto desde algo que esté DENTRO de la
+                                      # VPC (p.ej. una Cloud Run Job con el mismo
+                                      # VPC connector). Cloud Shell NO califica.
         )
 
     conn = getconn()
