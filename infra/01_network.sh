@@ -2,18 +2,6 @@
 # Crea la VPC dedicada, subred, rango privado para Cloud SQL (Private Services
 # Access) y el conector de Acceso VPC sin servidor para que Cloud Run pueda
 # hablar con Cloud SQL por IP privada (sin exponer nada públicamente).
-#
-# NOTA sobre "Shared VPC": Shared VPC es un recurso a nivel de ORGANIZACIÓN
-# (un proyecto "host" comparte red con proyectos "service"). Para un ambiente
-# de prueba de un solo proyecto no aporta valor y sí añade costo/latencia de
-# administración, así que aquí se crea una VPC normal dentro del mismo
-# proyecto. Si más adelante separas Dev/Staging/Prod en distintos proyectos,
-# puedes convertir este proyecto en host con:
-#   gcloud compute shared-vpc enable "${PROJECT_ID}"
-#   gcloud compute shared-vpc associated-projects add SERVICE_PROJECT_ID \
-#       --host-project="${PROJECT_ID}"
-# y los proyectos "service" usarían esta misma VPC/subred vía --network con
-# el formato projects/HOST_PROJECT/global/networks/NETWORK.
 set -euo pipefail
 
 echo ">> Creando VPC ${NETWORK_NAME} (modo custom, sin subredes automáticas)..."
