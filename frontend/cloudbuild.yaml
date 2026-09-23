@@ -35,7 +35,7 @@ steps:
           --image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:${SHORT_SHA}" \
           --region="${_REGION}" --project="$PROJECT_ID" \
           --service-account="easyhr-frontend-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-          --set-env-vars="AGENT_MASTER_URL=${AGENT_MASTER_URL},EMPLOYEE_API_URL=${EMPLOYEE_API_URL},BIRTHDAY_AGENT_URL=${BIRTHDAY_URL}" \
+          --set-env-vars="AGENT_MASTER_URL=$${AGENT_MASTER_URL},EMPLOYEE_API_URL=$${EMPLOYEE_API_URL},BIRTHDAY_AGENT_URL=$${BIRTHDAY_URL}" \
           --allow-unauthenticated \
           --min-instances=0 --max-instances=3 --cpu=1 --memory=512Mi --concurrency=40 \
           --quiet

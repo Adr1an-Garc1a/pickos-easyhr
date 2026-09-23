@@ -42,7 +42,12 @@ echo ">> Buscando repositorios vinculados a la conexión '${CONNECTION_NAME}'...
 gcloud builds repositories list \
   --connection="${CONNECTION_NAME}" --region="${CONNECTION_REGION}" --project="${PROJECT_ID}"
 
-read -rp "Nombre exacto del repositorio (columna REPOSITORY/NAME de arriba): " REPO_RESOURCE_NAME
+echo ""
+echo "   OJO: el nombre del repositorio normalmente incluye tu usuario de"
+echo "   GitHub pegado al inicio (ej. 'Adr1an-Garc1a-pickos-easyhr'), NO es"
+echo "   solo el nombre corto del repo. Copia el valor EXACTO de la columna"
+echo "   NAME de la tabla de arriba, respetando mayúsculas/minúsculas."
+read -rp "Nombre exacto del repositorio: " REPO_RESOURCE_NAME
 
 REPOSITORY="projects/${PROJECT_ID}/locations/${CONNECTION_REGION}/connections/${CONNECTION_NAME}/repositories/${REPO_RESOURCE_NAME}"
 echo ">> Usando repositorio: ${REPOSITORY}"

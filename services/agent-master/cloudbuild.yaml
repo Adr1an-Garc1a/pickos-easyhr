@@ -35,7 +35,7 @@ steps:
           --image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/agent-master:${SHORT_SHA}" \
           --region="${_REGION}" --project="$PROJECT_ID" \
           --service-account="easyhr-agent-master-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-          --set-env-vars="BIRTHDAY_AGENT_URL=${BIRTHDAY_URL},VACATION_AGENT_URL=${VACATION_URL},JOBDESC_AGENT_URL=${JOBDESC_URL},GOOGLE_GENAI_USE_VERTEXAI=${_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL}" \
+          --set-env-vars="BIRTHDAY_AGENT_URL=$${BIRTHDAY_URL},VACATION_AGENT_URL=$${VACATION_URL},JOBDESC_AGENT_URL=$${JOBDESC_URL},GOOGLE_GENAI_USE_VERTEXAI=${_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL}" \
           --no-allow-unauthenticated \
           --min-instances=0 --max-instances=3 --cpu=1 --memory=1Gi --concurrency=10 \
           --quiet

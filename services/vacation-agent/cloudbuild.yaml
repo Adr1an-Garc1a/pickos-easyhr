@@ -31,7 +31,7 @@ steps:
           --image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/vacation-agent:${SHORT_SHA}" \
           --region="${_REGION}" --project="$PROJECT_ID" \
           --service-account="easyhr-vacation-agent-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-          --set-env-vars="EMPLOYEE_API_URL=${EMPLOYEE_API_URL},GOOGLE_GENAI_USE_VERTEXAI=${_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL}" \
+          --set-env-vars="EMPLOYEE_API_URL=$${EMPLOYEE_API_URL},GOOGLE_GENAI_USE_VERTEXAI=${_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL}" \
           --no-allow-unauthenticated \
           --min-instances=0 --max-instances=2 --cpu=1 --memory=512Mi --concurrency=10 \
           --quiet
