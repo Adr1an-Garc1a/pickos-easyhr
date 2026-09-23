@@ -32,13 +32,17 @@ CONNECTION_REGION="${CONNECTION_REGION:-$REGION}"
 echo ">> Buscando conexiones de GitHub en ${CONNECTION_REGION}..."
 gcloud builds connections list --region="${CONNECTION_REGION}" --project="${PROJECT_ID}"
 
-read -rp "Nombre exacto de tu conexión (columna NAME de arriba): " CONNECTION_NAME
+echo ""
+echo "   OJO: escribe el nombre de la CONEXIÓN (columna NAME de la tabla de"
+echo "   arriba, algo como 'adr-garcia-pickos-easyhr-connector') — NO tu"
+echo "   usuario de GitHub ni el nombre del repositorio, eso viene después."
+read -rp "Nombre exacto de tu conexión: " CONNECTION_NAME
 
 echo ">> Buscando repositorios vinculados a la conexión '${CONNECTION_NAME}'..."
-gcloud builds connections repositories list \
+gcloud builds repositories list \
   --connection="${CONNECTION_NAME}" --region="${CONNECTION_REGION}" --project="${PROJECT_ID}"
 
-read -rp "Nombre exacto del repositorio (columna REPOSITORY de arriba): " REPO_RESOURCE_NAME
+read -rp "Nombre exacto del repositorio (columna REPOSITORY/NAME de arriba): " REPO_RESOURCE_NAME
 
 REPOSITORY="projects/${PROJECT_ID}/locations/${CONNECTION_REGION}/connections/${CONNECTION_NAME}/repositories/${REPO_RESOURCE_NAME}"
 echo ">> Usando repositorio: ${REPOSITORY}"

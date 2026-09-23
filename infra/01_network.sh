@@ -56,12 +56,13 @@ gcloud services vpc-peerings connect \
   --network="${NETWORK_NAME}"
 
 echo ">> Creando el conector VPC Access para Cloud Run (tamaño mínimo por costo)..."
+
 gcloud compute networks vpc-access connectors create "${VPC_CONNECTOR_NAME}" \
   --project="${PROJECT_ID}" \
   --region="${REGION}" \
   --network="${NETWORK_NAME}" \
   --range="${VPC_CONNECTOR_RANGE}" \
-  --machine-type=f1-micro \
+  --machine-type=e2-micro \
   --min-instances=2 \
   --max-instances=3
 

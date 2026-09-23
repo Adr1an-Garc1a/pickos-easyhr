@@ -59,6 +59,12 @@ body {
   line-height: 1.6;
 }
 
+.page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
 .page {
   max-width: var(--page-max-width);
   margin: 0 auto;
