@@ -22,7 +22,7 @@ def _get_id_token(audience: str) -> str:
     return google.oauth2.id_token.fetch_id_token(auth_req, audience)
 
 
-def call_internal_service(base_url: str, path: str, method: str = "GET", json_body: dict | None = None, params: dict | None = None, timeout: int = 90):
+def call_internal_service(base_url: str, path: str, method: str = "GET", json_body: dict | None = None, params: dict | None = None, timeout: int = 120):
     """Llama a otro servicio de Cloud Run de la plataforma Easy HR con un ID
     token fresco. `base_url` debe ser la URL raíz del servicio (audiencia)."""
     token = _get_id_token(base_url)

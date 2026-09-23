@@ -91,8 +91,12 @@ def list_employees():
         params["area"] = area
     if search:
         filters.append(
-            "(LOWER(e.nombre) LIKE :q OR LOWER(e.apellido_paterno) LIKE :q "
-            "OR LOWER(e.apellido_materno) LIKE :q)"
+            "(LOWER(e.nombre) LIKE :q "
+            "OR LOWER(e.apellido_paterno) LIKE :q "
+            "OR LOWER(e.apellido_materno) LIKE :q "
+            "OR LOWER(e.nombre || ' ' || e.apellido_paterno) LIKE :q "
+            "OR LOWER(e.nombre || ' ' || e.apellido_paterno || ' ' || e.apellido_materno) LIKE :q "
+            "OR LOWER(e.apellido_paterno || ' ' || e.apellido_materno) LIKE :q)"
         )
         params["q"] = f"%{search.lower()}%"
 

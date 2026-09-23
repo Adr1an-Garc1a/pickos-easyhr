@@ -18,11 +18,22 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
 CLOUDBUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
 echo ">> Otorgando permisos a la cuenta de servicio de Cloud Build (${CLOUDBUILD_SA})..."
 for role in roles/run.admin roles/iam.serviceAccountUser roles/artifactregistry.writer; do
   gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
     --member="serviceAccount:${CLOUDBUILD_SA}" --role="${role}" --condition=None --quiet
+done
+
+# Desde 2024, los triggers creados por consola pueden ejecutarse con la
+# cuenta de servicio POR DEFAULT DE COMPUTE ENGINE en vez de la de Cloud
+# Build (depende de qué se haya seleccionado al crear el trigger). Como no
+# sabemos cuál usará cada trigger, se los damos a ambas por seguridad.
+echo ">> Otorgando los mismos permisos a la cuenta de Compute Engine por si los triggers la usan (${COMPUTE_SA})..."
+for role in roles/run.admin roles/iam.serviceAccountUser roles/artifactregistry.writer; do
+  gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+    --member="serviceAccount:${COMPUTE_SA}" --role="${role}" --condition=None --quiet
 done
 
 # Región donde vive la CONEXIÓN (no es necesariamente la misma que REGION de
