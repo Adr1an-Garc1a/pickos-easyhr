@@ -6,7 +6,7 @@
   <title>{% block title %}Pick'Os · Easy HR{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <div class="page">
     <nav class="pill-nav">
       <div class="pill-nav__logo">

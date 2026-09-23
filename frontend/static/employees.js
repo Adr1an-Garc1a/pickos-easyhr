@@ -11,12 +11,23 @@
   let currentPage = 1;
   let searchTimeout = null;
 
+  // Previene XSS almacenado: cualquier dato que venga de la base (nombre,
+  // rol, área, etc.) se escapa ANTES de insertarse en el HTML de la tabla.
+  // Sin esto, alguien podría crear un empleado con nombre
+  // "<img src=x onerror=alert(1)>" y ese script se ejecutaría para
+  // cualquiera que abra esta pantalla.
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
   async function loadAreas() {
     const res = await fetch("/api/areas");
     const areas = await res.json();
     for (const a of areas) {
-      areaFilter.insertAdjacentHTML("beforeend", `<option value="${a.nombre}">${a.nombre}</option>`);
-      areaSelect.insertAdjacentHTML("beforeend", `<option value="${a.nombre}">${a.nombre}</option>`);
+      areaFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(a.nombre)}">${escapeHtml(a.nombre)}</option>`);
+      areaSelect.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(a.nombre)}">${escapeHtml(a.nombre)}</option>`);
     }
   }
 
@@ -40,13 +51,13 @@
 
     tbody.innerHTML = data.items.map((e) => `
       <tr>
-        <td>${e.id}</td>
-        <td>${e.nombre} ${e.apellido_paterno} ${e.apellido_materno}</td>
-        <td>${e.rol}</td>
-        <td>${e.area}</td>
-        <td>${e.gerente_nombre || "—"}</td>
-        <td>${e.fecha_ingreso}</td>
-        <td>${e.fecha_nacimiento}</td>
+        <td>${escapeHtml(e.id)}</td>
+        <td>${escapeHtml(e.nombre)} ${escapeHtml(e.apellido_paterno)} ${escapeHtml(e.apellido_materno)}</td>
+        <td>${escapeHtml(e.rol)}</td>
+        <td>${escapeHtml(e.area)}</td>
+        <td>${escapeHtml(e.gerente_nombre || "—")}</td>
+        <td>${escapeHtml(e.fecha_ingreso)}</td>
+        <td>${escapeHtml(e.fecha_nacimiento)}</td>
         <td>
           <span class="link-action" data-edit="${e.id}">Editar</span>
           <span class="link-action danger" data-delete="${e.id}">Eliminar</span>

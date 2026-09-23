@@ -310,3 +310,85 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* =============================================================================
+   Móvil — el chat se convierte en pantalla completa tipo app: encabezado
+   compacto arriba, chips en una tira horizontal deslizable, y el chat
+   ocupando TODO el espacio restante (en vez de flotar en medio de espacio
+   en blanco con scroll larguísimo de la página).
+   ============================================================================= */
+@media (max-width: 700px) {
+  html, body { height: 100%; }
+
+  /* Nav más compacta (aplica a todas las páginas) */
+  .pill-nav { padding: 8px 14px; }
+  .pill-nav__mark { width: 26px; height: 26px; font-size: 12px; }
+  .pill-nav__logo { font-size: 14px; gap: 6px; }
+  .pill-nav__link { padding: 6px 12px; font-size: 13px; }
+
+  /* Hero reducido (aplica a todas las páginas) */
+  .hero { padding: var(--spacing-8) 0 0; }
+  .hero__title { font-size: 26px; margin: 6px 0 4px; }
+  .hero__subtitle { font-size: 13px; line-height: 1.4; }
+  .badge { font-size: 10px; padding: 4px 12px; }
+
+  /* Chips: una sola fila deslizable en vez de envolver en varias líneas */
+  .quick-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 2px 4px;
+    margin: 0 -2px;
+  }
+  .quick-actions::-webkit-scrollbar { display: none; }
+  .quick-chip {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    white-space: nowrap;
+  }
+  .quick-chip__icon { font-size: 14px; }
+}
+
+/* Solo la pantalla del chat pasa a modo "pantalla completa tipo app": el
+   chat ocupa TODO el espacio restante del viewport, con su propio scroll
+   interno, en vez de flotar en medio de espacio en blanco. La pantalla de
+   Empleados conserva el scroll normal de la página (necesita espacio para
+   la tabla, que puede ser más larga que la pantalla). */
+@media (max-width: 700px) {
+  body.page-chat .page {
+    height: 100dvh;
+    padding: var(--spacing-8) var(--spacing-8) 0;
+    gap: var(--spacing-8);
+    overflow: hidden;
+  }
+
+  body.page-chat .page__content {
+    flex: 1;
+    min-height: 0; /* imprescindible para que el hijo flex (chat-card) sí pueda encogerse/crecer */
+    gap: var(--spacing-8);
+  }
+
+  body.page-chat .chat-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    margin-bottom: var(--spacing-8);
+  }
+  body.page-chat .chat-log {
+    flex: 1;
+    min-height: 0;
+    max-height: none; /* ya no depende de un alto fijo, se ajusta al espacio disponible */
+  }
+  body.page-chat .chat-bubble { max-width: 86%; font-size: 14px; }
+  body.page-chat .chat-form { gap: 8px; }
+  body.page-chat .chat-input { padding: 10px 16px; font-size: 14px; }
+  body.page-chat .btn--send { padding: 10px 18px; }
+  body.page-chat .page__footer { display: none; }
+}
+
+

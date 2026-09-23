@@ -20,6 +20,21 @@ BIRTHDAY_AGENT_URL = os.environ.get("BIRTHDAY_AGENT_URL", "")
 app = Flask(__name__)
 
 
+@app.after_request
+def _set_security_headers(response):
+    """Cabeceras de seguridad básicas (defensa en profundidad contra XSS,
+    clickjacking y sniffing de tipo de contenido)."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self'; "
+        "img-src 'self' data:; object-src 'none'; base-uri 'self'; "
+        "frame-ancestors 'none'"
+    )
+    return response
+
+
 @app.get("/")
 def index():
     return render_template("index.html", active="chat")

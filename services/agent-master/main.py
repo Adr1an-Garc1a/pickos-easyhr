@@ -23,6 +23,15 @@ from request_context import set_request_context
 APP_NAME = "agent_master"
 app = Flask(__name__)
 
+
+@app.after_request
+def _set_security_headers(response):
+    """Cabeceras de seguridad básicas (defensa en profundidad)."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+    return response
+
 session_service = InMemorySessionService()
 runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
 

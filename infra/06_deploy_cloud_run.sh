@@ -29,7 +29,7 @@ gcloud run deploy "${CR_EMPLOYEE_API}" \
   --set-env-vars="DB_NAME=${DB_NAME},DB_USER=${DB_APP_USER},INSTANCE_CONNECTION_NAME=${PROJECT_ID}:${REGION}:${SQL_INSTANCE_NAME}" \
   --set-secrets="DB_PASSWORD=${SECRET_DB_PASSWORD}:latest" \
   --no-allow-unauthenticated \
-  --min-instances=0 --max-instances=2 --cpu=1 --memory=512Mi --concurrency=20 --timeout=300 \
+  --min-instances=0 --max-instances=1 --cpu=1 --memory=512Mi --concurrency=20 --timeout=300 \
   --quiet
 
 EMPLOYEE_API_URL="$(gcloud run services describe "${CR_EMPLOYEE_API}" \
@@ -46,7 +46,7 @@ gcloud run deploy "${CR_BIRTHDAY}" \
   --service-account="$(sa_email ${SA_BIRTHDAY})" \
   --set-env-vars="EMPLOYEE_API_URL=${EMPLOYEE_API_URL},BUCKET_CARDS=${BUCKET_CARDS},GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=${GEMINI_MODEL}" \
   --no-allow-unauthenticated \
-  --min-instances=0 --max-instances=2 --cpu=1 --memory=1Gi --concurrency=5 --timeout=300 \
+  --min-instances=0 --max-instances=1 --cpu=1 --memory=1Gi --concurrency=5 --timeout=300 \
   --quiet
 BIRTHDAY_URL="$(gcloud run services describe "${CR_BIRTHDAY}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
 
@@ -57,7 +57,7 @@ gcloud run deploy "${CR_VACATION}" \
   --service-account="$(sa_email ${SA_VACATION})" \
   --set-env-vars="EMPLOYEE_API_URL=${EMPLOYEE_API_URL},GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=${GEMINI_MODEL}" \
   --no-allow-unauthenticated \
-  --min-instances=0 --max-instances=2 --cpu=1 --memory=512Mi --concurrency=10 --timeout=300 \
+  --min-instances=0 --max-instances=1 --cpu=1 --memory=512Mi --concurrency=10 --timeout=300 \
   --quiet
 VACATION_URL="$(gcloud run services describe "${CR_VACATION}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
 
@@ -68,7 +68,7 @@ gcloud run deploy "${CR_JOBDESC}" \
   --service-account="$(sa_email ${SA_JOBDESC})" \
   --set-env-vars="EMPLOYEE_API_URL=${EMPLOYEE_API_URL},BUCKET_JOBDESC_REFS=${BUCKET_JOBDESC_REFS},GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=${GEMINI_MODEL}" \
   --no-allow-unauthenticated \
-  --min-instances=0 --max-instances=2 --cpu=1 --memory=1Gi --concurrency=5 --timeout=300 \
+  --min-instances=0 --max-instances=1 --cpu=1 --memory=1Gi --concurrency=5 --timeout=300 \
   --quiet
 JOBDESC_URL="$(gcloud run services describe "${CR_JOBDESC}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
 
@@ -82,7 +82,7 @@ gcloud run deploy "${CR_AGENT_MASTER}" \
   --service-account="$(sa_email ${SA_AGENT_MASTER})" \
   --set-env-vars="BIRTHDAY_AGENT_URL=${BIRTHDAY_URL},VACATION_AGENT_URL=${VACATION_URL},JOBDESC_AGENT_URL=${JOBDESC_URL},GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=${GEMINI_MODEL}" \
   --no-allow-unauthenticated \
-  --min-instances=0 --max-instances=3 --cpu=1 --memory=1Gi --concurrency=10 --timeout=300 \
+  --min-instances=0 --max-instances=1 --cpu=1 --memory=1Gi --concurrency=10 --timeout=300 \
   --quiet
 AGENT_MASTER_URL="$(gcloud run services describe "${CR_AGENT_MASTER}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
 
@@ -96,7 +96,7 @@ gcloud run deploy "${CR_FRONTEND}" \
   --service-account="$(sa_email ${SA_FRONTEND})" \
   --set-env-vars="AGENT_MASTER_URL=${AGENT_MASTER_URL},EMPLOYEE_API_URL=${EMPLOYEE_API_URL},BIRTHDAY_AGENT_URL=${BIRTHDAY_URL}" \
   --allow-unauthenticated \
-  --min-instances=0 --max-instances=3 --cpu=1 --memory=512Mi --concurrency=40 --timeout=300 \
+  --min-instances=0 --max-instances=1 --cpu=1 --memory=512Mi --concurrency=40 --timeout=300 \
   --quiet
 
 FRONTEND_URL="$(gcloud run services describe "${CR_FRONTEND}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"

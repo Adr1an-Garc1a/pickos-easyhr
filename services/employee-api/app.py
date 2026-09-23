@@ -33,10 +33,46 @@ from db import SessionLocal
 
 app = Flask(__name__)
 
+
+@app.after_request
+def _set_security_headers(response):
+    """Cabeceras de seguridad básicas. employee-api solo responde JSON, pero
+    se agregan de todas formas como defensa en profundidad (por ejemplo, si
+    un cliente mal configurado llegara a renderizar la respuesta como HTML)."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+    return response
+
 REQUIRED_FIELDS = [
     "nombre", "apellido_paterno", "apellido_materno",
     "fecha_nacimiento", "fecha_ingreso", "rol", "area",
 ]
+
+# Límites de longitud alineados con las columnas VARCHAR de schema.sql —
+# validarlos aquí da un error 400 claro en vez de un 500 genérico si la
+# base de datos rechaza el INSERT/UPDATE por exceder el límite, y de paso
+# evita guardar basura (caracteres de control, null bytes) en campos de texto.
+TEXT_FIELD_LIMITS = {
+    "nombre": 80, "apellido_paterno": 80, "apellido_materno": 80,
+    "rol": 120, "email": 150,
+}
+
+
+def _validate_text_fields(data: dict) -> str | None:
+    """Devuelve un mensaje de error si algún campo de texto viene vacío tras
+    limpiarlo, con caracteres de control, o excede su longitud máxima."""
+    for field, max_len in TEXT_FIELD_LIMITS.items():
+        value = data.get(field)
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            return f"El campo '{field}' debe ser texto"
+        if any(ord(ch) < 32 for ch in value if ch not in ("\n", "\t")):
+            return f"El campo '{field}' contiene caracteres no permitidos"
+        if len(value) > max_len:
+            return f"El campo '{field}' excede el máximo de {max_len} caracteres"
+    return None
 
 
 def _parse_date(value: str, field: str) -> datetime.date:
@@ -143,6 +179,10 @@ def create_employee():
     if missing:
         return jsonify({"error": f"Faltan campos requeridos: {', '.join(missing)}"}), 400
 
+    validation_error = _validate_text_fields(data)
+    if validation_error:
+        return jsonify({"error": validation_error}), 400
+
     try:
         fecha_nacimiento = _parse_date(data["fecha_nacimiento"], "fecha_nacimiento")
         fecha_ingreso = _parse_date(data["fecha_ingreso"], "fecha_ingreso")
@@ -199,6 +239,10 @@ def update_employee(employee_id: int):
     data = request.get_json(silent=True) or {}
     if not data:
         return jsonify({"error": "Cuerpo vacío"}), 400
+
+    validation_error = _validate_text_fields(data)
+    if validation_error:
+        return jsonify({"error": validation_error}), 400
 
     allowed_fields = {
         "nombre", "apellido_paterno", "apellido_materno", "fecha_nacimiento",

@@ -33,7 +33,7 @@ steps:
           --service-account="easyhr-birthday-agent-sa@$PROJECT_ID.iam.gserviceaccount.com" \
           --set-env-vars="EMPLOYEE_API_URL=$${EMPLOYEE_API_URL},BUCKET_CARDS=$PROJECT_ID-birthday-cards,GOOGLE_GENAI_USE_VERTEXAI=${_USE_VERTEXAI},GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=${_REGION},GEMINI_MODEL=${_GEMINI_MODEL}" \
           --no-allow-unauthenticated \
-          --min-instances=0 --max-instances=2 --cpu=1 --memory=1Gi --concurrency=5 --timeout=300 \
+          --min-instances=0 --max-instances=1 --cpu=1 --memory=1Gi --concurrency=5 --timeout=300 \
           --quiet
 
         gcloud run services add-iam-policy-binding easyhr-employee-api \
